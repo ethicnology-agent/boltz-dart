@@ -119,7 +119,10 @@ impl BtcLnSwap {
             swap_script,
             invoice,
             electrum_url: strip_protocol_prefix(&electrum_url),
-            boltz_url: match ensure_boltz_url(&boltz_url, network.is_testnet()) {
+            boltz_url: match ensure_boltz_url(
+                &boltz_url,
+                super::types::Network::from(network) != super::types::Network::Mainnet,
+            ) {
                 Ok(url) => url,
                 Err(_) => force_https(&boltz_url),
             },
@@ -141,6 +144,12 @@ impl BtcLnSwap {
         boltz_url: String,
         referral_id: Option<String>,
     ) -> Result<BtcLnSwap, BoltzError> {
+        if network != swap_master_key.network.bitcoin() {
+            return Err(BoltzError::new(
+                "Network".into(),
+                "Swap chain or key network mismatch".into(),
+            ));
+        }
         let swap_type = SwapType::Submarine;
         let electrum_url = strip_protocol_prefix(&electrum_url);
         let swap_xkey_inner: BoltzSwapMasterKey = swap_master_key.try_into()?;
@@ -150,8 +159,11 @@ impl BtcLnSwap {
             Ok(result) => result,
             Err(e) => return Err(e.into()),
         };
-        let boltz_url = ensure_boltz_url(&boltz_url, network.is_testnet())
-            .map_err(|e| BoltzError::new("Network".to_string(), e))?;
+        let boltz_url = ensure_boltz_url(
+            &boltz_url,
+            super::types::Network::from(network) != super::types::Network::Mainnet,
+        )
+        .map_err(|e| BoltzError::new("Network".to_string(), e))?;
         let boltz_client = BoltzApiClientV2::new(boltz_url.clone(), None);
         let create_swap_req = boltz_client::swaps::boltz::CreateSubmarineRequest {
             from: "BTC".to_string(),
@@ -220,9 +232,7 @@ impl BtcLnSwap {
     /// Retrieves the preimage for a completed submarine swap.
     pub async fn get_completed_submarine_preimage(&self) -> Result<String, BoltzError> {
         let boltz_client = BoltzApiClientV2::new(ensure_http_prefix(&self.boltz_url), None);
-        let response = boltz_client
-            .get_submarine_preimage(&self.id)
-            .await?;
+        let response = boltz_client.get_submarine_preimage(&self.id).await?;
         let swap_script: BtcSwapScript = self.swap_script.clone().try_into()?;
         let preimage = Preimage::from_str(&response.preimage)?;
         if preimage.sha256.to_string() != self.preimage.sha256
@@ -249,6 +259,12 @@ impl BtcLnSwap {
         description: Option<String>,
         referral_id: Option<String>,
     ) -> Result<BtcLnSwap, BoltzError> {
+        if network != swap_master_key.network.bitcoin() {
+            return Err(BoltzError::new(
+                "Network".into(),
+                "Swap chain or key network mismatch".into(),
+            ));
+        }
         let swap_type = SwapType::Reverse;
         let swap_xkey_inner: BoltzSwapMasterKey = swap_master_key.try_into()?;
         let claim_kps = swap_xkey_inner.derive_swapkey(index)?;
@@ -259,8 +275,11 @@ impl BtcLnSwap {
             compressed: true,
             inner: claim_kps.public_key(),
         };
-        let boltz_url = ensure_boltz_url(&boltz_url, network.is_testnet())
-            .map_err(|e| BoltzError::new("Network".to_string(), e))?;
+        let boltz_url = ensure_boltz_url(
+            &boltz_url,
+            super::types::Network::from(network) != super::types::Network::Mainnet,
+        )
+        .map_err(|e| BoltzError::new("Network".to_string(), e))?;
         let boltz_client = BoltzApiClientV2::new(boltz_url.clone(), None);
         let create_reverse_req = if out_address.is_some() {
             let address = out_address.unwrap();

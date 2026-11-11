@@ -113,3 +113,13 @@ Also try `flutter run` in the `example` directory.
 - [FRB-Docs](https://cjycode.com/flutter_rust_bridge/v1/index.html)
 - [FRB-Codebase](https://github.com/fzyzcjy/flutter_rust_bridge/)
 - [Article](https://blog.logrocket.com/using-flutter-rust-bridge-cross-platform-development/)
+
+## Regtest networks
+
+`Chain` distinguishes Bitcoin/Liquid regtest from testnet. New chain swaps take `network: Network` instead of `is_testnet: bool`; the network must match the swap master key before the library contacts Boltz. BTC and Liquid Lightning constructors also require matching chain families and master-key networks.
+
+Persisted chain swaps serialize the canonical `network` field. The updated reader still accepts legacy `is_testnet` booleans, preserving mainnet/testnet keys, scripts and amounts. Missing, unknown or conflicting network fields are rejected. Newly serialized swaps require an updated reader; downgrade compatibility is not guaranteed.
+
+Supply explicit `ElectrumSettings` with `tls: false` for local plaintext Electrum connections, including restored swaps, claims, refunds, size estimates and local broadcast. Chain selection never comes from endpoint URLs. `check_lockup_outspends` accepts an optional explorer URL for the resolved lockup chain; regtest requires it and otherwise fails before network I/O. Mainnet keeps HTTPS enforcement and its existing explorer defaults.
+
+The pinned native dependency supports the default Elements regtest policy asset `5ac9f65c0efcc4775e0baec4ec03abdde22473cd3cf33c0419ca290e0751b225`. A custom regtest genesis with another policy asset needs native dependency support and must not bypass asset validation.
