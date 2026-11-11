@@ -221,7 +221,7 @@ impl BtcLnSwap {
     pub async fn get_completed_submarine_preimage(&self) -> Result<String, BoltzError> {
         let boltz_client = BoltzApiClientV2::new(ensure_http_prefix(&self.boltz_url), None);
         let response = boltz_client
-            .get_submarine_claim_tx_details(&self.id)
+            .get_submarine_preimage(&self.id)
             .await?;
         let swap_script: BtcSwapScript = self.swap_script.clone().try_into()?;
         let preimage = Preimage::from_str(&response.preimage)?;
