@@ -1025,7 +1025,7 @@ abstract class BoltzCoreApiImplPlatform extends BaseApiImpl<BoltzCoreWire> {
   void cst_api_fill_to_wire_chain_swap(
       ChainSwap apiObj, wire_cst_chain_swap wireObj) {
     wireObj.id = cst_encode_String(apiObj.id);
-    wireObj.is_testnet = cst_encode_bool(apiObj.isTestnet);
+    wireObj.network = cst_encode_network(apiObj.network);
     wireObj.direction = cst_encode_chain_swap_direction(apiObj.direction);
     cst_api_fill_to_wire_key_pair(apiObj.refundKeys, wireObj.refund_keys);
     wireObj.refund_index = cst_encode_u_64(apiObj.refundIndex);
@@ -2218,6 +2218,18 @@ class BoltzCoreWire implements BaseWire {
             ffi.Pointer<ffi.Int32>,
           )>();
 
+  void wire__crate__api__types__chain_is_testnet(int port_, int that) {
+    return _wire__crate__api__types__chain_is_testnet(port_, that);
+  }
+
+  late final _wire__crate__api__types__chain_is_testnetPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Int32)>>(
+    'frbgen_boltz_wire__crate__api__types__chain_is_testnet',
+  );
+  late final _wire__crate__api__types__chain_is_testnet =
+      _wire__crate__api__types__chain_is_testnetPtr
+          .asFunction<void Function(int, int)>();
+
   void wire__crate__api__chain_swap__chain_swap_broadcast_boltz(
     int port_,
     ffi.Pointer<wire_cst_chain_swap> that,
@@ -2435,7 +2447,7 @@ class BoltzCoreWire implements BaseWire {
   void wire__crate__api__chain_swap__chain_swap_new(
     int port_,
     ffi.Pointer<wire_cst_list_prim_u_8_strict> id,
-    bool is_testnet,
+    int network,
     int direction,
     ffi.Pointer<wire_cst_key_pair> refund_keys,
     int refund_index,
@@ -2455,7 +2467,7 @@ class BoltzCoreWire implements BaseWire {
     return _wire__crate__api__chain_swap__chain_swap_new(
       port_,
       id,
-      is_testnet,
+      network,
       direction,
       refund_keys,
       refund_index,
@@ -2479,7 +2491,7 @@ class BoltzCoreWire implements BaseWire {
           ffi.Void Function(
             ffi.Int64,
             ffi.Pointer<wire_cst_list_prim_u_8_strict>,
-            ffi.Bool,
+            ffi.Int32,
             ffi.Int32,
             ffi.Pointer<wire_cst_key_pair>,
             ffi.Uint64,
@@ -2501,7 +2513,7 @@ class BoltzCoreWire implements BaseWire {
           void Function(
             int,
             ffi.Pointer<wire_cst_list_prim_u_8_strict>,
-            bool,
+            int,
             int,
             ffi.Pointer<wire_cst_key_pair>,
             int,
@@ -2525,7 +2537,7 @@ class BoltzCoreWire implements BaseWire {
     ffi.Pointer<wire_cst_swap_master_key> swap_master_key,
     int index,
     int amount,
-    bool is_testnet,
+    int network,
     ffi.Pointer<wire_cst_list_prim_u_8_strict> btc_electrum_url,
     ffi.Pointer<wire_cst_list_prim_u_8_strict> lbtc_electrum_url,
     ffi.Pointer<wire_cst_list_prim_u_8_strict> boltz_url,
@@ -2537,7 +2549,7 @@ class BoltzCoreWire implements BaseWire {
       swap_master_key,
       index,
       amount,
-      is_testnet,
+      network,
       btc_electrum_url,
       lbtc_electrum_url,
       boltz_url,
@@ -2553,7 +2565,7 @@ class BoltzCoreWire implements BaseWire {
             ffi.Pointer<wire_cst_swap_master_key>,
             ffi.Uint64,
             ffi.Uint64,
-            ffi.Bool,
+            ffi.Int32,
             ffi.Pointer<wire_cst_list_prim_u_8_strict>,
             ffi.Pointer<wire_cst_list_prim_u_8_strict>,
             ffi.Pointer<wire_cst_list_prim_u_8_strict>,
@@ -2567,7 +2579,7 @@ class BoltzCoreWire implements BaseWire {
             ffi.Pointer<wire_cst_swap_master_key>,
             int,
             int,
-            bool,
+            int,
             ffi.Pointer<wire_cst_list_prim_u_8_strict>,
             ffi.Pointer<wire_cst_list_prim_u_8_strict>,
             ffi.Pointer<wire_cst_list_prim_u_8_strict>,
@@ -2681,6 +2693,7 @@ class BoltzCoreWire implements BaseWire {
     int network,
     ffi.Pointer<wire_cst_list_prim_u_8_strict> boltz_url,
     ffi.Pointer<ffi.Int32> chain_swap_direction,
+    ffi.Pointer<wire_cst_list_prim_u_8_strict> explorer_url,
   ) {
     return _wire__crate__api__transactions__check_lockup_outspends(
       port_,
@@ -2690,6 +2703,7 @@ class BoltzCoreWire implements BaseWire {
       network,
       boltz_url,
       chain_swap_direction,
+      explorer_url,
     );
   }
 
@@ -2704,6 +2718,7 @@ class BoltzCoreWire implements BaseWire {
                     ffi.Int32,
                     ffi.Pointer<wire_cst_list_prim_u_8_strict>,
                     ffi.Pointer<ffi.Int32>,
+                    ffi.Pointer<wire_cst_list_prim_u_8_strict>,
                   )>>(
           'frbgen_boltz_wire__crate__api__transactions__check_lockup_outspends');
   late final _wire__crate__api__transactions__check_lockup_outspends =
@@ -2716,6 +2731,7 @@ class BoltzCoreWire implements BaseWire {
             int,
             ffi.Pointer<wire_cst_list_prim_u_8_strict>,
             ffi.Pointer<ffi.Int32>,
+            ffi.Pointer<wire_cst_list_prim_u_8_strict>,
           )>();
 
   void wire__crate__api__transactions__check_vout_0_outspend(
@@ -4379,8 +4395,8 @@ final class wire_cst_l_btc_swap_script_str extends ffi.Struct {
 final class wire_cst_chain_swap extends ffi.Struct {
   external ffi.Pointer<wire_cst_list_prim_u_8_strict> id;
 
-  @ffi.Bool()
-  external bool is_testnet;
+  @ffi.Int32()
+  external int network;
 
   @ffi.Int32()
   external int direction;
