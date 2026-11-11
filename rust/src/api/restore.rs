@@ -881,7 +881,14 @@ mod tests {
             infer_network("BTC", "BTC", Network::Testnet),
             Ok(Chain::BitcoinTestnet)
         ));
-        assert!(infer_network("BTC", "BTC", Network::Regtest).is_err());
+        assert!(matches!(
+            infer_network("BTC", "BTC", Network::Regtest),
+            Ok(Chain::BitcoinRegtest)
+        ));
+        assert!(matches!(
+            infer_network("BTC", "L-BTC", Network::Regtest),
+            Ok(Chain::LiquidRegtest)
+        ));
     }
 
     fn test_master_key() -> SwapMasterKey {
