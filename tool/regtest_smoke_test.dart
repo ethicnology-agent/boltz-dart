@@ -83,7 +83,9 @@ void main() {
         ]);
         if (result.exitCode != 0 ||
             (jsonDecode(result.stdout as String)['blockheight'] as int) <
-                height) return false;
+                height) {
+          return false;
+        }
       }
       return true;
     }
@@ -94,8 +96,10 @@ void main() {
       final target = await rpc(liquid, 'getblockcount') as int;
       for (var attempt = 0; attempt < 100; attempt++) {
         if ((await request(liquid ? 30001 : 30000, '/blocks/tip/height')
-                    as int) >=
-                target) return;
+                as int) >=
+            target) {
+          return;
+        }
         await Future<void>.delayed(const Duration(milliseconds: 100));
       }
       throw StateError('Indexer did not catch up');
@@ -106,8 +110,9 @@ void main() {
         final height = await rpc(false, 'getblockcount') as int;
         final deadline = DateTime.now().add(const Duration(seconds: 120));
         while (!await lightningCaughtUp(height)) {
-          if (DateTime.now().isAfter(deadline))
+          if (DateTime.now().isAfter(deadline)) {
             throw StateError('Lightning tip did not catch up');
+          }
           await Future<void>.delayed(const Duration(milliseconds: 100));
         }
       }
@@ -121,9 +126,10 @@ void main() {
         '--notifications=none',
         ...args
       ]);
-      if (result.exitCode != 0)
+      if (result.exitCode != 0) {
         throw StateError(
             'Lightning operation failed: ${result.stdout.toString().replaceAll(RegExp(r'[a-fA-F0-9]{32,}'), '<hex>')} ${result.stderr.toString().replaceAll(RegExp(r'[a-fA-F0-9]{32,}'), '<hex>')}');
+      }
       return jsonDecode(result.stdout as String) as Map<String, dynamic>;
     }
 
@@ -226,7 +232,9 @@ void main() {
         await mine(liquid);
         await payment;
         expect(
-            (await rpc(liquid, 'getreceivedbyaddress', liquid ? [destination, 1, 'bitcoin'] : [destination]) as num) >
+            (await rpc(liquid, 'getreceivedbyaddress',
+                        liquid ? [destination, 1, 'bitcoin'] : [destination])
+                    as num) >
                 0,
             isTrue);
         print('${liquid ? 'Liquid' : 'Bitcoin'} reverse claimed');
@@ -265,8 +273,12 @@ void main() {
             electrumSettings: fromLiquid ? btcElectrum : liquidElectrum);
         await mine(!fromLiquid);
         expect(
-            (await rpc(!fromLiquid, 'getreceivedbyaddress', !fromLiquid ? [destination, 1, 'bitcoin'] : [destination])
-                    as num) >
+            (await rpc(
+                    !fromLiquid,
+                    'getreceivedbyaddress',
+                    !fromLiquid
+                        ? [destination, 1, 'bitcoin']
+                        : [destination]) as num) >
                 0,
             isTrue);
         print('Chain ${direction.name} claimed');
