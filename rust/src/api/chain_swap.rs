@@ -908,3 +908,84 @@ fn extract_id(response: Value) -> Result<String, BoltzError> {
         )),
     }
 }
+
+#[cfg(test)]
+mod network_tests {
+    use super::*;
+
+    fn fixture(network: Network, direction: ChainSwapDirection) -> ChainSwap {
+        ChainSwap::new(
+            "public-fixture".into(),
+            network,
+            direction,
+            KeyPair {
+                secret_key: "fixture-only".into(),
+                public_key: "refund".into(),
+            },
+            2,
+            KeyPair {
+                secret_key: "fixture-only".into(),
+                public_key: "claim".into(),
+            },
+            3,
+            PreImage {
+                value: "fixture-only".into(),
+                sha256: "hash".into(),
+                hash160: "short-hash".into(),
+            },
+            BtcSwapScriptStr {
+                swap_type: super::super::types::SwapType::Chain,
+                funding_addrs: None,
+                hashlock: "hash".into(),
+                receiver_pubkey: "receiver".into(),
+                locktime: 100,
+                sender_pubkey: "sender".into(),
+                side: None,
+            },
+            LBtcSwapScriptStr {
+                swap_type: super::super::types::SwapType::Chain,
+                funding_addrs: None,
+                hashlock: "hash".into(),
+                receiver_pubkey: "receiver".into(),
+                locktime: 100,
+                sender_pubkey: "sender".into(),
+                blinding_key: "fixture-only".into(),
+                side: None,
+            },
+            "address".into(),
+            10000,
+            "btc:50000".into(),
+            "liquid:50001".into(),
+            "https://example.invalid/v2".into(),
+            None,
+            "fixture-only".into(),
+        )
+    }
+
+    #[test]
+    fn legacy_chain_json_preserves_every_field_and_selects_original_chains() {
+        for (network, legacy) in [(Network::Mainnet, false), (Network::Testnet, true)] {
+            for direction in [ChainSwapDirection::BtcToLbtc, ChainSwapDirection::LbtcToBtc] {
+                let original = fixture(network, direction);
+                let mut json = serde_json::to_value(&original).unwrap();
+                json.as_object_mut().unwrap().remove("network");
+                json["is_testnet"] = serde_json::json!(legacy);
+                let restored: ChainSwap = serde_json::from_value(json.clone()).unwrap();
+                assert!(restored == original);
+                let (claim, _) = restored.get_network(SwapTxKind::Claim);
+                let (refund, _) = restored.get_network(SwapTxKind::Refund);
+                assert!(Network::from(claim) == network);
+                assert!(Network::from(refund) == network);
+                assert!(claim != refund);
+                json["network"] = serde_json::json!("Regtest");
+                assert!(serde_json::from_value::<ChainSwap>(json).is_err());
+            }
+        }
+        let original = fixture(Network::Regtest, ChainSwapDirection::BtcToLbtc);
+        let restored: ChainSwap =
+            serde_json::from_str(&serde_json::to_string(&original).unwrap()).unwrap();
+        assert!(restored == original);
+        assert!(restored.get_network(SwapTxKind::Claim).0 == Chain::LiquidRegtest);
+        assert!(restored.get_network(SwapTxKind::Refund).0 == Chain::BitcoinRegtest);
+    }
+}

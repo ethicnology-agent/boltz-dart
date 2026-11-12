@@ -519,3 +519,118 @@ pub struct VoutOutspend {
     /// Block time of the spending transaction, when confirmed.
     pub timestamp: Option<u64>,
 }
+
+#[cfg(test)]
+mod regtest_tests {
+    use super::*;
+
+    #[test]
+    fn every_chain_round_trips_without_folding_regtest_into_testnet() {
+        for chain in [
+            Chain::Bitcoin,
+            Chain::BitcoinTestnet,
+            Chain::Liquid,
+            Chain::LiquidTestnet,
+            Chain::BitcoinRegtest,
+            Chain::LiquidRegtest,
+        ] {
+            let inner: AllChains = chain.into();
+            assert!(Chain::from(inner) == chain);
+            let network = Network::from(chain);
+            assert!(network.bitcoin().into_network() == network);
+            assert!(network.liquid().into_network() == network);
+        }
+        assert!(!Chain::BitcoinRegtest.is_testnet());
+        assert!(!Chain::LiquidRegtest.is_testnet());
+    }
+
+    impl Chain {
+        fn into_network(self) -> Network {
+            self.into()
+        }
+    }
+
+    #[tokio::test]
+    async fn constructors_reject_key_network_and_chain_family_before_io() {
+        let key = super::super::secrets::SwapMasterKey {
+            xprv: String::new(),
+            xpub: String::new(),
+            mnemonic: String::new(),
+            fingerprint: String::new(),
+            network: Network::Mainnet,
+        };
+        let btc = super::super::btc_ln::BtcLnSwap::new_submarine(
+            key.clone(),
+            0,
+            String::new(),
+            Chain::BitcoinRegtest,
+            String::new(),
+            "http://127.0.0.1:1".into(),
+            None,
+        )
+        .await;
+        assert_eq!(btc.err().unwrap().kind, "Network");
+        let liquid = super::super::lbtc_ln::LbtcLnSwap::new_submarine(
+            key.clone(),
+            0,
+            String::new(),
+            Chain::LiquidRegtest,
+            String::new(),
+            "http://127.0.0.1:1".into(),
+            None,
+        )
+        .await;
+        assert_eq!(liquid.err().unwrap().kind, "Network");
+        let chain = super::super::chain_swap::ChainSwap::new_swap(
+            ChainSwapDirection::BtcToLbtc,
+            key.clone(),
+            0,
+            10000,
+            Network::Regtest,
+            String::new(),
+            String::new(),
+            "http://127.0.0.1:1".into(),
+            None,
+        )
+        .await;
+        assert_eq!(chain.err().unwrap().kind, "Network");
+        let wrong_family = super::super::btc_ln::BtcLnSwap::new_submarine(
+            key,
+            0,
+            String::new(),
+            Chain::Liquid,
+            String::new(),
+            "http://127.0.0.1:1".into(),
+            None,
+        )
+        .await;
+        assert_eq!(wrong_family.err().unwrap().kind, "Network");
+    }
+
+    #[test]
+    fn persisted_network_reads_legacy_bools_and_rejects_conflicting_fields() {
+        #[derive(Deserialize, Serialize)]
+        struct Stored {
+            #[serde(alias = "is_testnet", deserialize_with = "deserialize_swap_network")]
+            network: Network,
+        }
+        for (json, expected) in [
+            (r#"{"is_testnet":false}"#, Network::Mainnet),
+            (r#"{"is_testnet":true}"#, Network::Testnet),
+            (r#"{"network":"Regtest"}"#, Network::Regtest),
+        ] {
+            let value: Stored = serde_json::from_str(json).unwrap();
+            assert!(value.network == expected);
+            assert!(!serde_json::to_string(&value)
+                .unwrap()
+                .contains("is_testnet"));
+        }
+        for invalid in [
+            "{}",
+            r#"{"network":"unknown"}"#,
+            r#"{"network":"Regtest","is_testnet":true}"#,
+        ] {
+            assert!(serde_json::from_str::<Stored>(invalid).is_err());
+        }
+    }
+}

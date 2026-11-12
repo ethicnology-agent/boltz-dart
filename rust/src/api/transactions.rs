@@ -315,6 +315,59 @@ async fn check_outspend(
 mod tests {
     use super::*;
 
+    #[test]
+    fn regtest_explorer_is_explicit_and_follows_claim_or_refund_chain() {
+        for network in [Chain::BitcoinRegtest, Chain::LiquidRegtest] {
+            assert!(explorer_for(network, None).is_err());
+            assert_eq!(
+                explorer_for(network, Some("http://127.0.0.1:30000/".into())).unwrap(),
+                "http://127.0.0.1:30000"
+            );
+            for direction in [ChainSwapDirection::BtcToLbtc, ChainSwapDirection::LbtcToBtc] {
+                let claim =
+                    lockup_chain(network, SwapType::Chain, SwapTxKind::Claim, Some(direction))
+                        .unwrap();
+                let refund = lockup_chain(
+                    network,
+                    SwapType::Chain,
+                    SwapTxKind::Refund,
+                    Some(direction),
+                )
+                .unwrap();
+                assert!(claim != refund);
+                assert!(
+                    super::super::types::Network::from(claim)
+                        == super::super::types::Network::Regtest
+                );
+                assert!(
+                    claim
+                        == if direction == ChainSwapDirection::BtcToLbtc {
+                            Chain::LiquidRegtest
+                        } else {
+                            Chain::BitcoinRegtest
+                        }
+                );
+            }
+        }
+        assert!(explorer_for(Chain::Bitcoin, Some("http://127.0.0.1:30000".into())).is_err());
+    }
+
+    #[tokio::test]
+    async fn absent_regtest_explorer_fails_before_boltz_io() {
+        let error = check_lockup_outspends(
+            "id",
+            SwapType::Reverse,
+            SwapTxKind::Claim,
+            Chain::BitcoinRegtest,
+            "http://127.0.0.1:1",
+            None,
+            None,
+        )
+        .await
+        .unwrap_err();
+        assert_eq!(error.kind, "Input");
+    }
+
     #[tokio::test]
     #[ignore = "hits live Boltz + esplora; run with --ignored"]
     #[allow(deprecated)]
