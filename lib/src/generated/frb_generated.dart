@@ -224,7 +224,7 @@ abstract class BoltzCoreApi extends BaseApi {
 
   Future<ChainSwap> crateApiChainSwapChainSwapNew(
       {required String id,
-      required bool isTestnet,
+      required Network network,
       required ChainSwapDirection direction,
       required KeyPair refundKeys,
       required BigInt refundIndex,
@@ -246,7 +246,7 @@ abstract class BoltzCoreApi extends BaseApi {
       required SwapMasterKey swapMasterKey,
       required BigInt index,
       required BigInt amount,
-      required bool isTestnet,
+      required Network network,
       required String btcElectrumUrl,
       required String lbtcElectrumUrl,
       required String boltzUrl,
@@ -275,7 +275,8 @@ abstract class BoltzCoreApi extends BaseApi {
       required SwapTxKind txKind,
       required Chain network,
       required String boltzUrl,
-      ChainSwapDirection? chainSwapDirection});
+      ChainSwapDirection? chainSwapDirection,
+      String? explorerUrl});
 
   Future<OutspendStatus> crateApiTransactionsCheckVout0Outspend(
       {required String swapId,
@@ -1354,7 +1355,7 @@ class BoltzCoreApiImpl extends BoltzCoreApiImplPlatform
   @override
   Future<ChainSwap> crateApiChainSwapChainSwapNew(
       {required String id,
-      required bool isTestnet,
+      required Network network,
       required ChainSwapDirection direction,
       required KeyPair refundKeys,
       required BigInt refundIndex,
@@ -1373,7 +1374,7 @@ class BoltzCoreApiImpl extends BoltzCoreApiImplPlatform
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         var arg0 = cst_encode_String(id);
-        var arg1 = cst_encode_bool(isTestnet);
+        var arg1 = cst_encode_network(network);
         var arg2 = cst_encode_chain_swap_direction(direction);
         var arg3 = cst_encode_box_autoadd_key_pair(refundKeys);
         var arg4 = cst_encode_u_64(refundIndex);
@@ -1416,7 +1417,7 @@ class BoltzCoreApiImpl extends BoltzCoreApiImplPlatform
       constMeta: kCrateApiChainSwapChainSwapNewConstMeta,
       argValues: [
         id,
-        isTestnet,
+        network,
         direction,
         refundKeys,
         refundIndex,
@@ -1442,7 +1443,7 @@ class BoltzCoreApiImpl extends BoltzCoreApiImplPlatform
         debugName: "chain_swap_new",
         argNames: [
           "id",
-          "isTestnet",
+          "network",
           "direction",
           "refundKeys",
           "refundIndex",
@@ -1467,7 +1468,7 @@ class BoltzCoreApiImpl extends BoltzCoreApiImplPlatform
       required SwapMasterKey swapMasterKey,
       required BigInt index,
       required BigInt amount,
-      required bool isTestnet,
+      required Network network,
       required String btcElectrumUrl,
       required String lbtcElectrumUrl,
       required String boltzUrl,
@@ -1478,7 +1479,7 @@ class BoltzCoreApiImpl extends BoltzCoreApiImplPlatform
         var arg1 = cst_encode_box_autoadd_swap_master_key(swapMasterKey);
         var arg2 = cst_encode_u_64(index);
         var arg3 = cst_encode_u_64(amount);
-        var arg4 = cst_encode_bool(isTestnet);
+        var arg4 = cst_encode_network(network);
         var arg5 = cst_encode_String(btcElectrumUrl);
         var arg6 = cst_encode_String(lbtcElectrumUrl);
         var arg7 = cst_encode_String(boltzUrl);
@@ -1496,7 +1497,7 @@ class BoltzCoreApiImpl extends BoltzCoreApiImplPlatform
         swapMasterKey,
         index,
         amount,
-        isTestnet,
+        network,
         btcElectrumUrl,
         lbtcElectrumUrl,
         boltzUrl,
@@ -1514,7 +1515,7 @@ class BoltzCoreApiImpl extends BoltzCoreApiImplPlatform
           "swapMasterKey",
           "index",
           "amount",
-          "isTestnet",
+          "network",
           "btcElectrumUrl",
           "lbtcElectrumUrl",
           "boltzUrl",
@@ -1651,7 +1652,8 @@ class BoltzCoreApiImpl extends BoltzCoreApiImplPlatform
       required SwapTxKind txKind,
       required Chain network,
       required String boltzUrl,
-      ChainSwapDirection? chainSwapDirection}) {
+      ChainSwapDirection? chainSwapDirection,
+      String? explorerUrl}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         var arg0 = cst_encode_String(swapId);
@@ -1661,8 +1663,9 @@ class BoltzCoreApiImpl extends BoltzCoreApiImplPlatform
         var arg4 = cst_encode_String(boltzUrl);
         var arg5 =
             cst_encode_opt_box_autoadd_chain_swap_direction(chainSwapDirection);
+        var arg6 = cst_encode_opt_String(explorerUrl);
         return wire.wire__crate__api__transactions__check_lockup_outspends(
-            port_, arg0, arg1, arg2, arg3, arg4, arg5);
+            port_, arg0, arg1, arg2, arg3, arg4, arg5, arg6);
       },
       codec: DcoCodec(
         decodeSuccessData: dco_decode_list_vout_outspend,
@@ -1675,7 +1678,8 @@ class BoltzCoreApiImpl extends BoltzCoreApiImplPlatform
         txKind,
         network,
         boltzUrl,
-        chainSwapDirection
+        chainSwapDirection,
+        explorerUrl
       ],
       apiImpl: this,
     ));
@@ -1690,7 +1694,8 @@ class BoltzCoreApiImpl extends BoltzCoreApiImplPlatform
           "txKind",
           "network",
           "boltzUrl",
-          "chainSwapDirection"
+          "chainSwapDirection",
+          "explorerUrl"
         ],
       );
 
@@ -3277,7 +3282,7 @@ class BoltzCoreApiImpl extends BoltzCoreApiImplPlatform
       throw Exception('unexpected arr length: expect 18 but see ${arr.length}');
     return ChainSwap(
       id: dco_decode_String(arr[0]),
-      isTestnet: dco_decode_bool(arr[1]),
+      network: dco_decode_network(arr[1]),
       direction: dco_decode_chain_swap_direction(arr[2]),
       refundKeys: dco_decode_key_pair(arr[3]),
       refundIndex: dco_decode_u_64(arr[4]),
@@ -4088,7 +4093,7 @@ class BoltzCoreApiImpl extends BoltzCoreApiImplPlatform
   ChainSwap sse_decode_chain_swap(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_id = sse_decode_String(deserializer);
-    var var_isTestnet = sse_decode_bool(deserializer);
+    var var_network = sse_decode_network(deserializer);
     var var_direction = sse_decode_chain_swap_direction(deserializer);
     var var_refundKeys = sse_decode_key_pair(deserializer);
     var var_refundIndex = sse_decode_u_64(deserializer);
@@ -4108,7 +4113,7 @@ class BoltzCoreApiImpl extends BoltzCoreApiImplPlatform
     var var_blindingKey = sse_decode_String(deserializer);
     return ChainSwap(
         id: var_id,
-        isTestnet: var_isTestnet,
+        network: var_network,
         direction: var_direction,
         refundKeys: var_refundKeys,
         refundIndex: var_refundIndex,
@@ -5035,7 +5040,7 @@ class BoltzCoreApiImpl extends BoltzCoreApiImplPlatform
   void sse_encode_chain_swap(ChainSwap self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.id, serializer);
-    sse_encode_bool(self.isTestnet, serializer);
+    sse_encode_network(self.network, serializer);
     sse_encode_chain_swap_direction(self.direction, serializer);
     sse_encode_key_pair(self.refundKeys, serializer);
     sse_encode_u_64(self.refundIndex, serializer);

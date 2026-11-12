@@ -108,7 +108,7 @@ typedef struct wire_cst_l_btc_swap_script_str {
 
 typedef struct wire_cst_chain_swap {
   struct wire_cst_list_prim_u_8_strict *id;
-  bool is_testnet;
+  int32_t network;
   int32_t direction;
   struct wire_cst_key_pair refund_keys;
   uint64_t refund_index;
@@ -453,7 +453,7 @@ void frbgen_boltz_wire__crate__api__chain_swap__chain_swap_get_user_lockup(int64
 
 void frbgen_boltz_wire__crate__api__chain_swap__chain_swap_new(int64_t port_,
                                                                struct wire_cst_list_prim_u_8_strict *id,
-                                                               bool is_testnet,
+                                                               int32_t network,
                                                                int32_t direction,
                                                                struct wire_cst_key_pair *refund_keys,
                                                                uint64_t refund_index,
@@ -475,7 +475,7 @@ void frbgen_boltz_wire__crate__api__chain_swap__chain_swap_new_swap(int64_t port
                                                                     struct wire_cst_swap_master_key *swap_master_key,
                                                                     uint64_t index,
                                                                     uint64_t amount,
-                                                                    bool is_testnet,
+                                                                    int32_t network,
                                                                     struct wire_cst_list_prim_u_8_strict *btc_electrum_url,
                                                                     struct wire_cst_list_prim_u_8_strict *lbtc_electrum_url,
                                                                     struct wire_cst_list_prim_u_8_strict *boltz_url,
@@ -505,7 +505,8 @@ void frbgen_boltz_wire__crate__api__transactions__check_lockup_outspends(int64_t
                                                                          int32_t tx_kind,
                                                                          int32_t network,
                                                                          struct wire_cst_list_prim_u_8_strict *boltz_url,
-                                                                         int32_t *chain_swap_direction);
+                                                                         int32_t *chain_swap_direction,
+                                                                         struct wire_cst_list_prim_u_8_strict *explorer_url);
 
 void frbgen_boltz_wire__crate__api__transactions__check_vout_0_outspend(int64_t port_,
                                                                         struct wire_cst_list_prim_u_8_strict *swap_id,
